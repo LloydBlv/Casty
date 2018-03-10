@@ -5,6 +5,7 @@ import android.support.annotation.CallSuper;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
+import com.google.android.gms.cast.framework.media.RemoteMediaClient;
 
 /**
  * Extensible {@link AppCompatActivity}, which helps with setting widgets
@@ -16,7 +17,11 @@ public abstract class CastyActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        casty = Casty.create(this);
+        casty = Casty.create(this, new RemoteMediaClient.ProgressListener() {
+            @Override public void onProgressUpdated(long l, long l1) {
+
+            }
+        });
     }
 
     @CallSuper

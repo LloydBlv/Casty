@@ -4,6 +4,7 @@ import android.support.annotation.MainThread;
 import android.support.annotation.NonNull;
 import com.google.android.gms.cast.MediaInfo;
 import com.google.android.gms.cast.framework.media.RemoteMediaClient;
+import timber.log.Timber;
 
 public class CastyPlayer {
     private RemoteMediaClient remoteMediaClient;
@@ -21,6 +22,16 @@ public class CastyPlayer {
     void setRemoteMediaClient(RemoteMediaClient remoteMediaClient) {
         this.remoteMediaClient = remoteMediaClient;
     }
+
+    public void addProgressListener(final RemoteMediaClient.ProgressListener progressListener, final long period) {
+        remoteMediaClient.addProgressListener(progressListener, period);
+    }
+
+    public void removeProgressListener(final RemoteMediaClient.ProgressListener progressListener) {
+        remoteMediaClient.removeProgressListener(progressListener);
+    }
+
+
 
     /**
      * Plays the current media file if it is paused
@@ -66,6 +77,7 @@ public class CastyPlayer {
     public boolean isPlaying() {
         return remoteMediaClient != null && remoteMediaClient.isPlaying();
     }
+
 
     /**
      * Checks if the media file is paused
@@ -176,32 +188,43 @@ public class CastyPlayer {
         return new RemoteMediaClient.Listener() {
             @Override
             public void onStatusUpdated() {
+                Timber.d("onStatusUpdated");
                 onMediaLoadedListener.onMediaLoaded();
                 remoteMediaClient.removeListener(this);
             }
 
             @Override
             public void onMetadataUpdated() {
+                Timber.d("onMetadataUpdated");
+
                 //no-op
             }
 
             @Override
             public void onQueueStatusUpdated() {
+                Timber.d("onQueueStatusUpdated");
+
                 //no-op
             }
 
             @Override
             public void onPreloadStatusUpdated() {
+                Timber.d("onPreloadStatusUpdated");
+
                 //no-op
             }
 
             @Override
             public void onSendingRemoteMediaRequest() {
+                Timber.d("onSendingRemoteMediaRequest");
+
                 //no-op
             }
 
             @Override
             public void onAdBreakStatusUpdated() {
+                Timber.d("onAdBreakStatusUpdated");
+
                 //no-op
             }
         };

@@ -1,10 +1,10 @@
 apply plugin: 'com.android.library'
-apply plugin: 'com.github.dcendents.android-maven'
+//apply plugin: 'com.github.dcendents.android-maven'
 
 group = 'com.github.DroidsOnRoids'
 
 ext {
-    supportVersion = '27.0.2'
+    supportVersion = '27.1.0'
     castVersion = '11.8.0'
     queryVersion = '0.25.9'
 
@@ -37,6 +37,9 @@ dependencies {
     api "com.android.support:support-v4:$supportVersion"
     api "com.android.support:mediarouter-v7:$supportVersion"
     api "com.google.android.gms:play-services-cast-framework:$castVersion"
+
+    implementation 'com.jakewharton.timber:timber:4.6.1'
+
 }
 
-apply from: 'https://raw.githubusercontent.com/blundell/release-android-library/master/android-release-aar.gradle'
+//apply from: 'https://raw.githubusercontent.com/blundell/release-android-library/master/android-release-aar.gradle'
