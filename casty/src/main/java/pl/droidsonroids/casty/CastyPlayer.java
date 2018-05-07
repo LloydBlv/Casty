@@ -3,6 +3,7 @@ package pl.droidsonroids.casty;
 import android.support.annotation.MainThread;
 import android.support.annotation.NonNull;
 import com.google.android.gms.cast.MediaInfo;
+import com.google.android.gms.cast.MediaLoadOptions;
 import com.google.android.gms.cast.framework.media.RemoteMediaClient;
 import timber.log.Timber;
 
@@ -174,16 +175,69 @@ public class CastyPlayer {
     }
 
     private boolean playMediaBaseMethod(MediaInfo mediaInfo, boolean autoPlay, long position, boolean inBackground) {
+        Timber.d("playMediaBaseMethod(), mediaInfo:[%s], autoPlay:[%s], position:[%s], "
+                + "inBackground:[%s], remoteMediaClient:[%s]", mediaInfo.toJson(), autoPlay, position,
+            inBackground,remoteMediaClient);
         if (remoteMediaClient == null) {
             return false;
         }
         if (!inBackground) {
-            remoteMediaClient.addListener(createRemoteMediaClientListener());
+            remoteMediaClient.registerCallback(createRemoteMediaClientListener());
         }
-        remoteMediaClient.load(mediaInfo, autoPlay, position);
+        remoteMediaClient.load(mediaInfo, new MediaLoadOptions.Builder()
+            .setPlayPosition(position)
+            .setAutoplay(autoPlay)
+            .build());
+        //remoteMediaClient.load(mediaInfo, autoPlay, position);
         return true;
     }
 
+    private RemoteMediaClient.Callback createRemoteMediaClientListener() {
+        return new RemoteMediaClient.Callback() {
+            @Override
+            public void onStatusUpdated() {
+                Timber.d("onStatusUpdated");
+                onMediaLoadedListener.onMediaLoaded();
+                remoteMediaClient.unregisterCallback(this);
+            }
+
+            @Override
+            public void onMetadataUpdated() {
+                Timber.d("onMetadataUpdated");
+
+                //no-op
+            }
+
+            @Override
+            public void onQueueStatusUpdated() {
+                Timber.d("onQueueStatusUpdated");
+
+                //no-op
+            }
+
+            @Override
+            public void onPreloadStatusUpdated() {
+                Timber.d("onPreloadStatusUpdated");
+
+                //no-op
+            }
+
+            @Override
+            public void onSendingRemoteMediaRequest() {
+                Timber.d("onSendingRemoteMediaRequest");
+
+                //no-op
+            }
+
+            @Override
+            public void onAdBreakStatusUpdated() {
+                Timber.d("onAdBreakStatusUpdated");
+
+                //no-op
+            }
+        };
+    }
+    /*
     private RemoteMediaClient.Listener createRemoteMediaClientListener() {
         return new RemoteMediaClient.Listener() {
             @Override
@@ -229,6 +283,7 @@ public class CastyPlayer {
             }
         };
     }
+    */
 
     interface OnMediaLoadedListener {
         void onMediaLoaded();
