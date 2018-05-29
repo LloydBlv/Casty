@@ -1,5 +1,6 @@
 package pl.droidsonroids.casty;
 
+import android.content.Context;
 import android.view.Menu;
 import com.google.android.gms.cast.framework.CastButtonFactory;
 import com.google.android.gms.cast.framework.media.widget.ExpandedControllerActivity;
@@ -8,6 +9,10 @@ import com.google.android.gms.cast.framework.media.widget.ExpandedControllerActi
  * Fullscreen media controls
  */
 public class ExpandedControlsActivity extends ExpandedControllerActivity {
+
+    @Override protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(newBase);
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

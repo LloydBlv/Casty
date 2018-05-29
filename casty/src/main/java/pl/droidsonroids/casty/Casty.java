@@ -412,7 +412,8 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
     @Override
     public void onMediaLoaded() {
         Timber.d("onMediaLoaded()");
-        startExpandedControlsActivity();
+        //startExpandedControlsActivity();
+        onConnectChangeListener.onMediaLoaded();
     }
 
 
@@ -428,6 +429,8 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
         void onDisconnected(final int errorCode);
         void onConnecting();
         void onStartFailed(final int errorCode);
+
+        void onMediaLoaded();
     }
 
     public interface OnCastSessionUpdatedListener {
