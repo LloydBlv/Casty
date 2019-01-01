@@ -15,15 +15,15 @@ ext {
 }
 
 android {
-    compileSdkVersion 27
-    buildToolsVersion "27.0.3"
+    compileSdkVersion 28
+    buildToolsVersion '28.0.3'
 
     defaultConfig {
         minSdkVersion 14
-        targetSdkVersion 27
+        targetSdkVersion 28
         versionCode 7
         versionName PUBLISH_VERSION
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
         release {
@@ -34,12 +34,12 @@ android {
 }
 
 dependencies {
-    implementation "com.android.support:appcompat-v7:27.1.1"
-    implementation "com.android.support:support-v4:27.1.1"
-    api "com.android.support:mediarouter-v7:27.1.1"
-    api "com.google.android.gms:play-services-cast-framework:15.0.1"
+    implementation "androidx.appcompat:appcompat:1.0.2"
+//    implementation "androidx.legacy:legacy-support-v4:1.0.0"
+    api "androidx.mediarouter:mediarouter:1.0.0"
+    api "com.google.android.gms:play-services-cast-framework:16.1.2"
 
-    implementation 'com.jakewharton.timber:timber:4.7.0'
+    implementation 'com.jakewharton.timber:timber:4.7.1'
 
 }
 

@@ -1,7 +1,7 @@
 package pl.droidsonroids.casty;
 
 import android.net.Uri;
-import android.support.annotation.IntDef;
+import androidx.annotation.IntDef;
 import android.text.TextUtils;
 import com.google.android.gms.cast.MediaInfo;
 import com.google.android.gms.cast.MediaMetadata;
@@ -206,9 +206,10 @@ public class MediaData {
 
     public Builder addSubtitle(String url, String language) {
       final MediaTrack subtitleTrack =
-          new MediaTrack.Builder(Math.abs(url.hashCode()), MediaTrack.TYPE_TEXT).setLanguage("en-US")
-          //new MediaTrack.Builder(Math.abs(url.hashCode()), MediaTrack.TYPE_TEXT).setLanguage(language)
-              .setName("name:" + language)
+          new MediaTrack.Builder(Math.abs(url.hashCode()), MediaTrack.TYPE_TEXT)
+              .setLanguage("en-US")
+              //.setName(url)
+              .setName(language)
               .setSubtype(MediaTrack.SUBTYPE_NONE)
               .setContentId(url)
               .build();

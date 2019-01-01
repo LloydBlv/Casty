@@ -12,7 +12,7 @@
 
         <activity
             android:name="pl.droidsonroids.casty.ExpandedControlsActivity"
-            android:theme="@style/Theme.CastVideosDark" />
+            />
     </application>
 
 </manifest>
