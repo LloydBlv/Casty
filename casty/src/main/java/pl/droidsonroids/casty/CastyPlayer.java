@@ -184,10 +184,17 @@ public class CastyPlayer {
         if (!inBackground) {
             remoteMediaClient.registerCallback(createRemoteMediaClientListener());
         }
-        remoteMediaClient.load(mediaInfo, new MediaLoadOptions.Builder()
-            .setPlayPosition(position)
-            .setAutoplay(autoPlay)
-            .build());
+        final MediaLoadOptions.Builder mediaLoadOptionsBuilder =
+            new MediaLoadOptions.Builder()
+                .setPlayPosition(position)
+                .setAutoplay(autoPlay);
+
+        if (mediaInfo.getCustomData() != null) {
+            mediaLoadOptionsBuilder.setCustomData(mediaInfo.getCustomData());
+        }
+
+        remoteMediaClient.load(mediaInfo,
+            mediaLoadOptionsBuilder.build());
         //remoteMediaClient.load(mediaInfo, autoPlay, position);
         return true;
     }

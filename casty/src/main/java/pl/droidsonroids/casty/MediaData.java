@@ -10,7 +10,10 @@ import com.google.android.gms.common.images.WebImage;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Media information class
@@ -52,6 +55,8 @@ public class MediaData {
 
   boolean autoPlay = true;
   long position;
+
+  JSONObject customData;
 
   private List<String> imageUrls;
   private List<MediaTrack> mediaTracks;
@@ -103,6 +108,19 @@ public class MediaData {
     for (String imageUrl : imageUrls) {
       mediaMetadata.addImage(new WebImage(Uri.parse(imageUrl)));
     }
+
+    if (customData != null) {
+      Iterator<String> keysIterator = customData.keys();
+      while (keysIterator.hasNext()) {
+        String key = keysIterator.next();
+        try {
+          mediaMetadata.putString(key, customData.getString(key));
+        } catch (JSONException e) {
+          e.printStackTrace();
+        }
+      }
+    }
+
 
     return new MediaInfo.Builder(url).setStreamType(streamType)
         .setContentType(contentType)
@@ -235,6 +253,17 @@ public class MediaData {
      */
     public Builder setPosition(long position) {
       mediaData.position = position;
+      return this;
+    }
+
+    /**
+     * Sets the custom data
+     *
+     * @param position Start position of video in milliseconds
+     * @return this instance for chain calls
+     */
+    public Builder setCustomData(JSONObject customData) {
+      mediaData.customData = customData;
       return this;
     }
 
