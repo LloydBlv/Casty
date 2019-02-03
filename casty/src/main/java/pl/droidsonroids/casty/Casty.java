@@ -328,7 +328,7 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
         mProgressListenerPeriod, castSession);
     if (mProgressListenerPeriod > 0
         && castSession != null
-        && castSession.getRemoteMediaClient() != null) {
+        && castSession.getRemoteMediaClient() != null && mMediaProgressListener != null) {
       castSession.getRemoteMediaClient()
           .addProgressListener(mMediaProgressListener, mProgressListenerPeriod);
     }
@@ -340,7 +340,7 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
 
     if (mProgressListenerPeriod > 0
         && castSession != null
-        && castSession.getRemoteMediaClient() != null) {
+        && castSession.getRemoteMediaClient() != null && mMediaProgressListener != null) {
       this.castSession.getRemoteMediaClient().removeProgressListener(mMediaProgressListener);
     }
   }

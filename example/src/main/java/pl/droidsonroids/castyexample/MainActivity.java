@@ -18,7 +18,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        casty = Casty.create(this)
+        casty = Casty.create(this, null)
                 .withMiniController();
         setUpPlayButton();
         setUpMediaRouteButton();
@@ -37,10 +37,12 @@ public class MainActivity extends AppCompatActivity {
             public void onConnected() {
                 playButton.setEnabled(true);
             }
-
-            @Override
-            public void onDisconnected() {
+            @Override public void onConnecting() {}
+            @Override public void onStartFailed(int errorCode) {}
+            @Override public void onMediaLoaded() {}
+            @Override public void onDisconnected(int errorCode) {
                 playButton.setEnabled(false);
+
             }
         });
     }
