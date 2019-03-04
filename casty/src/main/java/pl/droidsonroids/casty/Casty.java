@@ -2,20 +2,22 @@ package pl.droidsonroids.casty;
 
 import android.app.Activity;
 import android.app.Application;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.UiThread;
-import androidx.mediarouter.app.MediaRouteButton;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.UiThread;
+import androidx.mediarouter.app.MediaRouteButton;
 import com.google.android.gms.cast.CastMediaControlIntent;
 import com.google.android.gms.cast.CastStatusCodes;
+import com.google.android.gms.cast.MediaInfo;
 import com.google.android.gms.cast.framework.CastButtonFactory;
 import com.google.android.gms.cast.framework.CastContext;
 import com.google.android.gms.cast.framework.CastOptions;
@@ -87,6 +89,25 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
     }
   }
 
+  /**
+   * Creates the Casty object.
+   *
+   * @param activity {@link Activity} in which Casty object is created
+   * @return the Casty object
+   */
+  public static Casty create(@NonNull Activity activity,
+      final OnConnectChangeListener onConnectChangeListener,
+      final RemoteMediaClient.ProgressListener progressListener) {
+    int playServicesState =
+        GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(activity);
+    if (playServicesState == ConnectionResult.SUCCESS) {
+      return new Casty(activity, progressListener, onConnectChangeListener);
+    } else {
+      Log.w(Casty.TAG, "Google Play services not found on a device, Casty won't work.");
+      return new CastyNoOp();
+    }
+  }
+
   //Needed for NoOp instance
   Casty() {
     //no-op
@@ -95,7 +116,7 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
   private Casty(@NonNull Activity activity,
       final RemoteMediaClient.ProgressListener progressListener) {
     this.activity = activity;
-    this.sessionManagerListener = createSessionManagerListener();
+    sessionManagerListener = createSessionManagerListener();
     this.mMediaProgressListener = progressListener;
     //mMediaProgressListener = new RemoteMediaClient.ProgressListener() {
     //    @Override public void onProgressUpdated(long progressMs, long durationMs) {
@@ -106,8 +127,26 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
     castyPlayer = new CastyPlayer(this);
     activity.getApplication().registerActivityLifecycleCallbacks(createActivityCallbacks());
     CastContext.getSharedInstance(activity).addCastStateListener(createCastStateListener());
+    handleCurrentCastSession();
+    registerSessionManagerListener();
+  }
 
-    /* If the casty is not initiated inside onCreate() of Activity this should be called manually*/
+  private Casty(@NonNull final Activity activity,
+      final RemoteMediaClient.ProgressListener progressListener,
+      final OnConnectChangeListener onConnectChangeListener) {
+    this.activity = activity;
+    sessionManagerListener = createSessionManagerListener();
+    this.mMediaProgressListener = progressListener;
+    this.onConnectChangeListener = onConnectChangeListener;
+    //mMediaProgressListener = new RemoteMediaClient.ProgressListener() {
+    //    @Override public void onProgressUpdated(long progressMs, long durationMs) {
+    //        Timber.d("onProgressUpdated(), progressMs:[%s], durationMs:[%s]", progressMs, durationMs);
+    //
+    //    }
+    //};
+    castyPlayer = new CastyPlayer(this);
+    activity.getApplication().registerActivityLifecycleCallbacks(createActivityCallbacks());
+    CastContext.getSharedInstance(activity).addCastStateListener(createCastStateListener());
     handleCurrentCastSession();
     registerSessionManagerListener();
   }
@@ -198,6 +237,7 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
    */
   public void setOnConnectChangeListener(
       @Nullable OnConnectChangeListener onConnectChangeListener) {
+    Timber.d("setOnConnectChangeListener(), onConnectChangeListener:[%s]", onConnectChangeListener);
     this.onConnectChangeListener = onConnectChangeListener;
   }
 
@@ -215,30 +255,25 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
     CastButtonFactory.setUpMediaRouteButton(activity, menu, R.id.casty_media_route_menu_item);
   }
 
+  private String getReadableState(int state) {
+    switch (state) {
+      case CastState.CONNECTED:
+        return "CONNECTED";
+      case CastState.CONNECTING:
+        return "CONNECTING";
+      case CastState.NO_DEVICES_AVAILABLE:
+        return "NO_DEVICES_AVAILABLE";
+      case CastState.NOT_CONNECTED:
+        return "NOT_CONNECTED";
+      default:
+        return state + "";
+    }
+  }
+
   @NonNull private CastStateListener createCastStateListener() {
     return new CastStateListener() {
       @Override public void onCastStateChanged(int state) {
-        String readableState = state + "";
-        switch (state) {
-          case CastState.CONNECTED:
-            readableState = "CONNECTED";
-            //onConnected(CastContext.getSharedInstance(activity).getSessionManager().getCurrentCastSession());
-            break;
-
-          case CastState.CONNECTING:
-            readableState = "CONNECTING";
-            //if (onConnectChangeListener != null) onConnectChangeListener.onConnecting();
-
-            break;
-          case CastState.NOT_CONNECTED:
-            readableState = "NOT_CONNECTED";
-
-            break;
-            case CastState.NO_DEVICES_AVAILABLE:
-            readableState = "NO_DEVICES_AVAILABLE";
-            break;
-        }
-        Timber.d("onCastStateChanged:[%s]", readableState);
+        Timber.d("onCastStateChanged:[%s]", getReadableState(state));
         if (state != CastState.NO_DEVICES_AVAILABLE && introductionOverlay != null) {
           showIntroductionOverlay();
         }
@@ -299,6 +334,8 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
       @Override public void onSessionResumeFailed(CastSession castSession, int error) {
         Timber.d("onSessionResumeFailed(), castSession:[%s], error:[%s]", castSession, error);
 
+        if (onConnectChangeListener != null) onConnectChangeListener.onStartFailed(error);
+
         //no-op
       }
 
@@ -311,7 +348,9 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
   }
 
   private void onConnected(CastSession castSession) {
-    Timber.d("onConnected(), castSession:[%s]", castSession);
+    Timber.d(
+        "onConnected(), castSession:[%s], onConnectChangeListener:[%s], onCastSessionUpdatedListener:[%s]",
+        castSession, onConnectChangeListener, onCastSessionUpdatedListener);
     this.castSession = castSession;
     castyPlayer.setRemoteMediaClient(castSession.getRemoteMediaClient());
 
@@ -346,8 +385,7 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
   }
 
   private void onDisconnected(final int error) {
-    Timber.d("onDisconnected()");
-
+    Timber.d("onDisconnected(), error:[%s]", CastStatusCodes.getStatusCodeString(error));
     unregisterProgressListener();
 
     this.castSession = null;
@@ -360,7 +398,6 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
   private Application.ActivityLifecycleCallbacks createActivityCallbacks() {
     return new Application.ActivityLifecycleCallbacks() {
       @Override public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
-
         //no-op
       }
 
@@ -369,7 +406,6 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
       }
 
       @Override public void onActivityResumed(Activity activity) {
-        Timber.d("onActivityResumed");
         if (Casty.this.activity == activity) {
           handleCurrentCastSession();
           registerSessionManagerListener();
@@ -377,8 +413,6 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
       }
 
       @Override public void onActivityPaused(Activity activity) {
-        Timber.d("onActivityPaused");
-
         if (Casty.this.activity == activity) unregisterSessionManagerListener();
       }
 
@@ -391,8 +425,6 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
       }
 
       @Override public void onActivityDestroyed(Activity activity) {
-        Timber.d("onActivityDestroyed");
-
         if (Casty.this.activity == activity) {
           activity.getApplication().unregisterActivityLifecycleCallbacks(this);
         }
@@ -408,6 +440,21 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
   private IntroductoryOverlay createIntroductionOverlay(MediaRouteButton mediaRouteButton) {
     return new IntroductoryOverlay.Builder(activity, mediaRouteButton).setTitleText(
         R.string.casty_introduction_text).setSingleTime().build();
+  }
+
+  public MediaInfo getMediaInfo() {
+    /*fun Casty.getCurrentMediaInfo(context: Context): MediaInfo? {
+    return CastContext.getSharedInstance(context)?.sessionManager?.currentCastSession?.remoteMediaClient?.mediaInfo
+}*/
+    try {
+      return CastContext.getSharedInstance(activity)
+          .getSessionManager()
+          .getCurrentCastSession()
+          .getRemoteMediaClient()
+          .getMediaInfo();
+    } catch (Exception ex) {
+      return null;
+    }
   }
 
   private void registerSessionManagerListener() {
@@ -445,7 +492,13 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
   }
 
   public void startExpandedControlsActivity() {
-    Intent intent = new Intent(activity, ExpandedControlsActivity.class);
+    Intent intent = new Intent();
+    intent.setComponent(new ComponentName(activity.getPackageName(), CastContext.getSharedInstance(activity)
+        .getCastOptions()
+        .getCastMediaOptions()
+        .getExpandedControllerActivityClassName()));
+    //Intent intent = new Intent(activity, CastContext.getSharedInstance(activity).getCastOptions().getCastMediaOptions().getExpandedControllerActivityClassName());
+    //Intent intent = new Intent(activity, ExpandedControlsActivity.class);
     activity.startActivity(intent);
   }
 
