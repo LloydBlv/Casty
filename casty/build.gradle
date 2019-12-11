@@ -34,7 +34,7 @@ android {
 }
 
 dependencies {
-    implementation "androidx.appcompat:appcompat:1.1.0"
+    implementation "androidx.appcompat:appcompat:1.0.2"
     api "androidx.mediarouter:mediarouter:1.1.0"
     api "com.google.android.gms:play-services-cast-framework:17.1.0"
     implementation 'com.jakewharton.timber:timber:4.7.1'
