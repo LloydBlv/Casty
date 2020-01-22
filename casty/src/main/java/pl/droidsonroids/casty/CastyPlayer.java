@@ -172,8 +172,8 @@ public class CastyPlayer {
   private boolean playMediaBaseMethod(MediaInfo mediaInfo, boolean autoPlay, long position,
       boolean inBackground) {
     Timber.d(
-        "playMediaBaseMethod(), mediaInfo:[%s], autoPlay:[%s], position:[%s] inBackground:[%s], remoteMediaClient:[%s]",
-        mediaInfo.toJson(), autoPlay, position, inBackground, remoteMediaClient);
+        "playMediaBaseMethod(), url:[%s], mediaInfo:[%s], autoPlay:[%s], position:[%s] inBackground:[%s], remoteMediaClient:[%s]",
+        mediaInfo.getContentId(), mediaInfo.toJson(), autoPlay, position, inBackground, remoteMediaClient);
     if (remoteMediaClient == null) {
       return false;
     }
