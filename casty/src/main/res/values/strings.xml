@@ -1,4 +1,13 @@
 <resources>
     <string name="app_name">Casty</string>
     <string name="casty_introduction_text">Use this button to connect with Chromecast</string>
+
+
+    <string name="cast_tracks_chooser_dialog_none">هیچ‌کدام</string>
+    <string name="cast_tracks_chooser_dialog_ok">تایید</string>
+    <string name="cast_tracks_chooser_dialog_cancel">بیخیال</string>
+    <string name="cast_tracks_chooser_dialog_subtitles">زیرنویس‌ها</string>
+
+    <string name="cast_casting_to_device">Castiiiiing to %1$s</string>
+
 </resources>

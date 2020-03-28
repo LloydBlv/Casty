@@ -226,7 +226,7 @@ public class MediaData {
       final MediaTrack subtitleTrack =
           new MediaTrack.Builder(Math.abs(url.hashCode()), MediaTrack.TYPE_TEXT).setLanguage("en-US")
               //new MediaTrack.Builder(Math.abs(url.hashCode()), MediaTrack.TYPE_TEXT).setLanguage(language)
-              .setName("name:" + language)
+              .setName(language)
               .setSubtype(MediaTrack.SUBTYPE_NONE)
               .setContentId(url)
               .build();

@@ -1,28 +1,13 @@
 apply plugin: 'com.android.library'
-
-//apply plugin: 'com.github.dcendents.android-maven'
-
-group = 'com.github.DroidsOnRoids'
-
-ext {
-    supportVersion = '27.1.1'
-    castVersion = '15.0.1'
-    queryVersion = '0.25.9'
-
-    PUBLISH_GROUP_ID = 'pl.droidsonroids'
-    PUBLISH_ARTIFACT_ID = 'casty'
-    PUBLISH_VERSION = '1.0.8'
-}
-
 android {
     compileSdkVersion 29
     buildToolsVersion "29.0.3"
 
     defaultConfig {
         minSdkVersion 14
-        targetSdkVersion 28
+        targetSdkVersion 29
         versionCode 7
-        versionName PUBLISH_VERSION
+        versionName "1.0.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -34,26 +19,8 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.0.2'
-//    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    api 'androidx.mediarouter:mediarouter:1.0.0'
-    api "com.google.android.gms:play-services-cast-framework:16.1.2"
-
+    implementation "androidx.appcompat:appcompat:1.0.2"
+    api "androidx.mediarouter:mediarouter:1.1.0"
+    api "com.google.android.gms:play-services-cast-framework:17.1.0"
     implementation 'com.jakewharton.timber:timber:4.7.1'
-
 }
-
-
-
-/*configurations.all {
-    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
-        def requested = details.requested
-        if (requested.group == 'com.android.support') {
-            if (!requested.name.startsWith("multidex")) {
-                details.useVersion '27.1.1'
-            }
-        }
-    }
-}*/
-
-//apply from: 'https://raw.githubusercontent.com/blundell/release-android-library/master/android-release-aar.gradle'

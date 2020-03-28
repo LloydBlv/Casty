@@ -160,6 +160,12 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
     return castyPlayer;
   }
 
+  public boolean hasMedia() {
+    return castyPlayer != null && (castyPlayer.isBuffering()
+        || castyPlayer.isPlaying()
+        || castyPlayer.isPaused());
+  }
+
   /**
    * Checks if a Google Cast device is connected.
    *
@@ -194,6 +200,18 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
   }
 
   /**
+   * Makes {@link MediaRouteButton} react to discovery events.
+   * Must be run on UiThread.
+   *
+   * @param mediaRouteButton Button to be set up
+   */
+  @UiThread public static void setUpMediaRouteButton(@NonNull Activity activity,
+      @NonNull MediaRouteButton mediaRouteButton) {
+    CastButtonFactory.setUpMediaRouteButton(activity, mediaRouteButton);
+    //introductionOverlay = createIntroductionOverlay(mediaRouteButton);
+  }
+
+  /**
    * Adds the Mini Controller at the bottom of Activity's layout.
    * Must be run on UiThread.
    *
@@ -209,6 +227,32 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
    * Must be run on UiThread.
    */
   @UiThread public void addMiniController() {
+    ViewGroup contentView = (ViewGroup) activity.findViewById(android.R.id.content);
+    View rootView = contentView.getChildAt(0);
+    LinearLayout linearLayout = new LinearLayout(activity);
+    LinearLayout.LayoutParams linearLayoutParams =
+        new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT);
+    linearLayout.setOrientation(LinearLayout.VERTICAL);
+    linearLayout.setLayoutParams(linearLayoutParams);
+
+    contentView.removeView(rootView);
+
+    ViewGroup.LayoutParams oldRootParams = rootView.getLayoutParams();
+    LinearLayout.LayoutParams rootParams =
+        new LinearLayout.LayoutParams(oldRootParams.width, 0, 1f);
+    rootView.setLayoutParams(rootParams);
+
+    linearLayout.addView(rootView);
+    activity.getLayoutInflater().inflate(R.layout.mini_controller, linearLayout, true);
+    activity.setContentView(linearLayout);
+  }
+
+  /**
+   * Adds the Mini Controller at the bottom of Activity's layout
+   * Must be run on UiThread.
+   */
+  @UiThread public static void addMiniController(Activity activity) {
     ViewGroup contentView = (ViewGroup) activity.findViewById(android.R.id.content);
     View rootView = contentView.getChildAt(0);
     LinearLayout linearLayout = new LinearLayout(activity);
@@ -493,10 +537,11 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
 
   public void startExpandedControlsActivity() {
     Intent intent = new Intent();
-    intent.setComponent(new ComponentName(activity.getPackageName(), CastContext.getSharedInstance(activity)
-        .getCastOptions()
-        .getCastMediaOptions()
-        .getExpandedControllerActivityClassName()));
+    intent.setComponent(new ComponentName(activity.getPackageName(),
+        CastContext.getSharedInstance(activity)
+            .getCastOptions()
+            .getCastMediaOptions()
+            .getExpandedControllerActivityClassName()));
     //Intent intent = new Intent(activity, CastContext.getSharedInstance(activity).getCastOptions().getCastMediaOptions().getExpandedControllerActivityClassName());
     //Intent intent = new Intent(activity, ExpandedControlsActivity.class);
     activity.startActivity(intent);
