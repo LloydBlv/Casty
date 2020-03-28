@@ -15,8 +15,8 @@ ext {
 }
 
 android {
-    compileSdkVersion 28
-    buildToolsVersion '28.0.3'
+    compileSdkVersion 29
+    buildToolsVersion "29.0.3"
 
     defaultConfig {
         minSdkVersion 14
@@ -34,9 +34,9 @@ android {
 }
 
 dependencies {
-    implementation "androidx.appcompat:appcompat:1.0.2"
-//    implementation "androidx.legacy:legacy-support-v4:1.0.0"
-    api "androidx.mediarouter:mediarouter:1.0.0"
+    implementation 'androidx.appcompat:appcompat:1.0.2'
+//    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    api 'androidx.mediarouter:mediarouter:1.0.0'
     api "com.google.android.gms:play-services-cast-framework:16.1.2"
 
     implementation 'com.jakewharton.timber:timber:4.7.1'
@@ -45,7 +45,7 @@ dependencies {
 
 
 
-configurations.all {
+/*configurations.all {
     resolutionStrategy.eachDependency { DependencyResolveDetails details ->
         def requested = details.requested
         if (requested.group == 'com.android.support') {
@@ -54,6 +54,6 @@ configurations.all {
             }
         }
     }
-}
+}*/
 
 //apply from: 'https://raw.githubusercontent.com/blundell/release-android-library/master/android-release-aar.gradle'
