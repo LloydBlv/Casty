@@ -11,10 +11,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 import androidx.mediarouter.app.MediaRouteButton;
+
 import com.google.android.gms.cast.CastMediaControlIntent;
 import com.google.android.gms.cast.CastStatusCodes;
 import com.google.android.gms.cast.MediaInfo;
@@ -29,6 +31,9 @@ import com.google.android.gms.cast.framework.SessionManagerListener;
 import com.google.android.gms.cast.framework.media.RemoteMediaClient;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
+
+import java.lang.ref.WeakReference;
+
 import timber.log.Timber;
 
 /**
@@ -47,7 +52,7 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
 
   private CastSession castSession;
   private CastyPlayer castyPlayer;
-  private Activity activity;
+  private WeakReference<Activity> activity;
   private IntroductoryOverlay introductionOverlay;
 
   public int mProgressListenerPeriod = 0;
@@ -115,7 +120,7 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
 
   private Casty(@NonNull Activity activity,
       final RemoteMediaClient.ProgressListener progressListener) {
-    this.activity = activity;
+    this.activity = new WeakReference(activity);
     sessionManagerListener = createSessionManagerListener();
     this.mMediaProgressListener = progressListener;
     //mMediaProgressListener = new RemoteMediaClient.ProgressListener() {
@@ -134,7 +139,7 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
   private Casty(@NonNull final Activity activity,
       final RemoteMediaClient.ProgressListener progressListener,
       final OnConnectChangeListener onConnectChangeListener) {
-    this.activity = activity;
+    this.activity = new WeakReference(activity);
     sessionManagerListener = createSessionManagerListener();
     this.mMediaProgressListener = progressListener;
     this.onConnectChangeListener = onConnectChangeListener;
@@ -182,7 +187,7 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
    * @param menu Menu in which MenuItem should be added
    */
   @UiThread public void addMediaRouteMenuItem(@NonNull Menu menu) {
-    activity.getMenuInflater().inflate(R.menu.casty_discovery, menu);
+    activity.get().getMenuInflater().inflate(R.menu.casty_discovery, menu);
     setUpMediaRouteMenuItem(menu);
     MenuItem menuItem = menu.findItem(R.id.casty_media_route_menu_item);
     introductionOverlay = createIntroductionOverlay(menuItem);
@@ -195,7 +200,7 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
    * @param mediaRouteButton Button to be set up
    */
   @UiThread public void setUpMediaRouteButton(@NonNull MediaRouteButton mediaRouteButton) {
-    CastButtonFactory.setUpMediaRouteButton(activity, mediaRouteButton);
+    CastButtonFactory.setUpMediaRouteButton(activity.get(), mediaRouteButton);
     //introductionOverlay = createIntroductionOverlay(mediaRouteButton);
   }
 
@@ -227,12 +232,14 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
    * Must be run on UiThread.
    */
   @UiThread public void addMiniController() {
+    Activity activity = this.activity.get();
+    if (activity == null) return;
     ViewGroup contentView = (ViewGroup) activity.findViewById(android.R.id.content);
     View rootView = contentView.getChildAt(0);
     LinearLayout linearLayout = new LinearLayout(activity);
     LinearLayout.LayoutParams linearLayoutParams =
-        new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.MATCH_PARENT);
+            new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT);
     linearLayout.setOrientation(LinearLayout.VERTICAL);
     linearLayout.setLayoutParams(linearLayoutParams);
 
@@ -296,7 +303,7 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
   }
 
   private void setUpMediaRouteMenuItem(Menu menu) {
-    CastButtonFactory.setUpMediaRouteButton(activity, menu, R.id.casty_media_route_menu_item);
+    CastButtonFactory.setUpMediaRouteButton(activity.get(), menu, R.id.casty_media_route_menu_item);
   }
 
   private String getReadableState(int state) {
@@ -333,19 +340,19 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
     return new SessionManagerListener<CastSession>() {
       @Override public void onSessionStarted(CastSession castSession, String sessionId) {
         Timber.d("onSessionStarted(), castSession:[%s], sessionId:[%s]", castSession, sessionId);
-        activity.invalidateOptionsMenu();
+        activity.get().invalidateOptionsMenu();
         onConnected(castSession);
       }
 
       @Override public void onSessionEnded(CastSession castSession, int error) {
         Timber.d("onSessionEnded(), castSession:[%s], error:[%s]", castSession, error);
-        activity.invalidateOptionsMenu();
+        activity.get().invalidateOptionsMenu();
         onDisconnected(error);
       }
 
       @Override public void onSessionResumed(CastSession castSession, boolean wasSuspended) {
         Timber.d("onSessionResumed(), castSession");
-        activity.invalidateOptionsMenu();
+        activity.get().invalidateOptionsMenu();
         onConnected(castSession);
       }
 
@@ -450,14 +457,14 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
       }
 
       @Override public void onActivityResumed(Activity activity) {
-        if (Casty.this.activity == activity) {
+        if (Casty.this.activity.get() == activity) {
           handleCurrentCastSession();
           registerSessionManagerListener();
         }
       }
 
       @Override public void onActivityPaused(Activity activity) {
-        if (Casty.this.activity == activity) unregisterSessionManagerListener();
+        if (Casty.this.activity.get() == activity) unregisterSessionManagerListener();
       }
 
       @Override public void onActivityStopped(Activity activity) {
@@ -469,7 +476,7 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
       }
 
       @Override public void onActivityDestroyed(Activity activity) {
-        if (Casty.this.activity == activity) {
+        if (Casty.this.activity.get() == activity) {
           activity.getApplication().unregisterActivityLifecycleCallbacks(this);
         }
       }
@@ -477,13 +484,13 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
   }
 
   private IntroductoryOverlay createIntroductionOverlay(MenuItem menuItem) {
-    return new IntroductoryOverlay.Builder(activity, menuItem).setTitleText(
-        R.string.casty_introduction_text).setSingleTime().build();
+    return new IntroductoryOverlay.Builder(activity.get(), menuItem).setTitleText(
+            R.string.casty_introduction_text).setSingleTime().build();
   }
 
   private IntroductoryOverlay createIntroductionOverlay(MediaRouteButton mediaRouteButton) {
-    return new IntroductoryOverlay.Builder(activity, mediaRouteButton).setTitleText(
-        R.string.casty_introduction_text).setSingleTime().build();
+    return new IntroductoryOverlay.Builder(activity.get(), mediaRouteButton).setTitleText(
+            R.string.casty_introduction_text).setSingleTime().build();
   }
 
   public MediaInfo getMediaInfo() {
@@ -491,31 +498,31 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
     return CastContext.getSharedInstance(context)?.sessionManager?.currentCastSession?.remoteMediaClient?.mediaInfo
 }*/
     try {
-      return CastContext.getSharedInstance(activity)
-          .getSessionManager()
-          .getCurrentCastSession()
-          .getRemoteMediaClient()
-          .getMediaInfo();
+      return CastContext.getSharedInstance(activity.get())
+              .getSessionManager()
+              .getCurrentCastSession()
+              .getRemoteMediaClient()
+              .getMediaInfo();
     } catch (Exception ex) {
       return null;
     }
   }
 
   private void registerSessionManagerListener() {
-    CastContext.getSharedInstance(activity)
+    CastContext.getSharedInstance(activity.get())
         .getSessionManager()
         .addSessionManagerListener(sessionManagerListener, CastSession.class);
   }
 
   private void unregisterSessionManagerListener() {
-    CastContext.getSharedInstance(activity)
+    CastContext.getSharedInstance(activity.get())
         .getSessionManager()
         .removeSessionManagerListener(sessionManagerListener, CastSession.class);
   }
 
   private void handleCurrentCastSession() {
     CastSession newCastSession =
-        CastContext.getSharedInstance(activity).getSessionManager().getCurrentCastSession();
+            CastContext.getSharedInstance(activity.get()).getSessionManager().getCurrentCastSession();
     if (castSession == null) {
       if (newCastSession != null) {
         onConnected(newCastSession);
@@ -537,14 +544,14 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
 
   public void startExpandedControlsActivity() {
     Intent intent = new Intent();
-    intent.setComponent(new ComponentName(activity.getPackageName(),
-        CastContext.getSharedInstance(activity)
-            .getCastOptions()
-            .getCastMediaOptions()
-            .getExpandedControllerActivityClassName()));
+    intent.setComponent(new ComponentName(activity.get().getPackageName(),
+            CastContext.getSharedInstance(activity.get())
+                    .getCastOptions()
+                    .getCastMediaOptions()
+                    .getExpandedControllerActivityClassName()));
     //Intent intent = new Intent(activity, CastContext.getSharedInstance(activity).getCastOptions().getCastMediaOptions().getExpandedControllerActivityClassName());
     //Intent intent = new Intent(activity, ExpandedControlsActivity.class);
-    activity.startActivity(intent);
+    activity.get().startActivity(intent);
   }
 
   public interface OnConnectChangeListener {
@@ -561,5 +568,9 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
 
   public interface OnCastSessionUpdatedListener {
     void onCastSessionUpdated(CastSession castSession);
+  }
+
+  public void release() {
+    activity.clear();
   }
 }
