@@ -1,19 +1,23 @@
 package pl.droidsonroids.casty;
 
 import android.net.Uri;
-import androidx.annotation.IntDef;
 import android.text.TextUtils;
+
+import androidx.annotation.IntDef;
+
 import com.google.android.gms.cast.MediaInfo;
 import com.google.android.gms.cast.MediaMetadata;
 import com.google.android.gms.cast.MediaTrack;
 import com.google.android.gms.common.images.WebImage;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 /**
  * Media information class
@@ -44,7 +48,7 @@ public class MediaData {
 
   public static final long UNKNOWN_DURATION = -1L;
 
-  private String url;
+  private final String url;
   private int streamType = STREAM_TYPE_NONE;
   private String contentType;
   private long streamDuration = UNKNOWN_DURATION;
@@ -58,8 +62,8 @@ public class MediaData {
 
   JSONObject customData;
 
-  private List<String> imageUrls;
-  private List<MediaTrack> mediaTracks;
+  private final List<String> imageUrls;
+  private final List<MediaTrack> mediaTracks;
 
   private MediaData(String url) {
     this.url = url;

@@ -45,10 +45,10 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
   static CastOptions customCastOptions;
 
   private SessionManagerListener<CastSession> sessionManagerListener;
-  private OnConnectChangeListener onConnectChangeListener;
-  private OnCastSessionUpdatedListener onCastSessionUpdatedListener;
+    private WeakReference<OnConnectChangeListener> onConnectChangeListener;
+    private OnCastSessionUpdatedListener onCastSessionUpdatedListener;
 
-  private RemoteMediaClient.ProgressListener mMediaProgressListener;
+    private WeakReference<RemoteMediaClient.ProgressListener> mMediaProgressListener;
 
   private CastSession castSession;
   private CastyPlayer castyPlayer;
@@ -121,8 +121,8 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
   private Casty(@NonNull Activity activity,
       final RemoteMediaClient.ProgressListener progressListener) {
     this.activity = new WeakReference(activity);
-    sessionManagerListener = createSessionManagerListener();
-    this.mMediaProgressListener = progressListener;
+      sessionManagerListener = createSessionManagerListener();
+      this.mMediaProgressListener = new WeakReference<RemoteMediaClient.ProgressListener>(progressListener);
     //mMediaProgressListener = new RemoteMediaClient.ProgressListener() {
     //    @Override public void onProgressUpdated(long progressMs, long durationMs) {
     //        Timber.d("onProgressUpdated(), progressMs:[%s], durationMs:[%s]", progressMs, durationMs);
@@ -139,20 +139,20 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
   private Casty(@NonNull final Activity activity,
       final RemoteMediaClient.ProgressListener progressListener,
       final OnConnectChangeListener onConnectChangeListener) {
-    this.activity = new WeakReference(activity);
-    sessionManagerListener = createSessionManagerListener();
-    this.mMediaProgressListener = progressListener;
-    this.onConnectChangeListener = onConnectChangeListener;
-    //mMediaProgressListener = new RemoteMediaClient.ProgressListener() {
-    //    @Override public void onProgressUpdated(long progressMs, long durationMs) {
-    //        Timber.d("onProgressUpdated(), progressMs:[%s], durationMs:[%s]", progressMs, durationMs);
-    //
-    //    }
-    //};
-    castyPlayer = new CastyPlayer(this);
-    activity.getApplication().registerActivityLifecycleCallbacks(createActivityCallbacks());
-    CastContext.getSharedInstance(activity).addCastStateListener(createCastStateListener());
-    handleCurrentCastSession();
+      this.activity = new WeakReference(activity);
+      sessionManagerListener = createSessionManagerListener();
+      this.mMediaProgressListener = new WeakReference<RemoteMediaClient.ProgressListener>(progressListener);
+      this.onConnectChangeListener = new WeakReference<OnConnectChangeListener>(onConnectChangeListener);
+      //mMediaProgressListener = new RemoteMediaClient.ProgressListener() {
+      //    @Override public void onProgressUpdated(long progressMs, long durationMs) {
+      //        Timber.d("onProgressUpdated(), progressMs:[%s], durationMs:[%s]", progressMs, durationMs);
+      //
+      //    }
+      //};
+      castyPlayer = new CastyPlayer(this);
+      activity.getApplication().registerActivityLifecycleCallbacks(createActivityCallbacks());
+      CastContext.getSharedInstance(activity).addCastStateListener(createCastStateListener());
+      handleCurrentCastSession();
     registerSessionManagerListener();
   }
 
@@ -282,17 +282,6 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
   }
 
   /**
-   * Sets {@link OnConnectChangeListener}
-   *
-   * @param onConnectChangeListener Connect change callback
-   */
-  public void setOnConnectChangeListener(
-      @Nullable OnConnectChangeListener onConnectChangeListener) {
-    Timber.d("setOnConnectChangeListener(), onConnectChangeListener:[%s]", onConnectChangeListener);
-    this.onConnectChangeListener = onConnectChangeListener;
-  }
-
-  /**
    * Sets {@link OnCastSessionUpdatedListener}
    *
    * @param onCastSessionUpdatedListener Cast session updated callback
@@ -358,14 +347,14 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
 
       @Override public void onSessionStarting(CastSession castSession) {
         Timber.d("onSessionStarting(), castSession:[%s]", castSession);
-        if (onConnectChangeListener != null) onConnectChangeListener.onConnecting();
+          if (onConnectChangeListener != null) onConnectChangeListener.get().onConnecting();
 
         //no-op
       }
 
       @Override public void onSessionStartFailed(CastSession castSession, int error) {
         Timber.d("onSessionStartFailed(), castSession:[%s], error:[%s]", castSession, error);
-        if (onConnectChangeListener != null) onConnectChangeListener.onStartFailed(error);
+          if (onConnectChangeListener != null) onConnectChangeListener.get().onStartFailed(error);
 
         //no-op
       }
@@ -385,7 +374,7 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
       @Override public void onSessionResumeFailed(CastSession castSession, int error) {
         Timber.d("onSessionResumeFailed(), castSession:[%s], error:[%s]", castSession, error);
 
-        if (onConnectChangeListener != null) onConnectChangeListener.onStartFailed(error);
+          if (onConnectChangeListener != null) onConnectChangeListener.get().onStartFailed(error);
 
         //no-op
       }
@@ -407,20 +396,21 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
 
     registerProgressListener();
 
-    if (onConnectChangeListener != null) onConnectChangeListener.onConnected();
-    if (onCastSessionUpdatedListener != null) {
-      onCastSessionUpdatedListener.onCastSessionUpdated(castSession);
-    }
+      if (onConnectChangeListener != null) onConnectChangeListener.get().onConnected();
+      if (onCastSessionUpdatedListener != null) {
+          onCastSessionUpdatedListener.onCastSessionUpdated(castSession);
+      }
   }
 
   public void registerProgressListener() {
     Timber.d("registerProgressListener(), mProgressListenerPeriod:[%s], castSession:[%s]",
         mProgressListenerPeriod, castSession);
     if (mProgressListenerPeriod > 0
-        && castSession != null
-        && castSession.getRemoteMediaClient() != null) {
-      castSession.getRemoteMediaClient()
-          .addProgressListener(mMediaProgressListener, mProgressListenerPeriod);
+            && castSession != null
+            && mMediaProgressListener.get() != null
+            && castSession.getRemoteMediaClient() != null) {
+        castSession.getRemoteMediaClient()
+                .addProgressListener(mMediaProgressListener.get(), mProgressListenerPeriod);
     }
   }
 
@@ -431,7 +421,7 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
     if (mProgressListenerPeriod > 0
         && castSession != null
         && castSession.getRemoteMediaClient() != null) {
-      this.castSession.getRemoteMediaClient().removeProgressListener(mMediaProgressListener);
+        this.castSession.getRemoteMediaClient().removeProgressListener(mMediaProgressListener.get());
     }
   }
 
@@ -440,10 +430,10 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
     unregisterProgressListener();
 
     this.castSession = null;
-    if (onConnectChangeListener != null) onConnectChangeListener.onDisconnected(error);
-    if (onCastSessionUpdatedListener != null) {
-      onCastSessionUpdatedListener.onCastSessionUpdated(null);
-    }
+      if (onConnectChangeListener != null) onConnectChangeListener.get().onDisconnected(error);
+      if (onCastSessionUpdatedListener != null) {
+          onCastSessionUpdatedListener.onCastSessionUpdated(null);
+      }
   }
 
   private Application.ActivityLifecycleCallbacks createActivityCallbacks() {
@@ -539,7 +529,7 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
   @Override public void onMediaLoaded() {
     Timber.d("onMediaLoaded()");
     //startExpandedControlsActivity();
-    onConnectChangeListener.onMediaLoaded();
+      onConnectChangeListener.get().onMediaLoaded();
   }
 
   public void startExpandedControlsActivity() {
@@ -571,6 +561,8 @@ public class Casty implements CastyPlayer.OnMediaLoadedListener {
   }
 
   public void release() {
-    activity.clear();
+      activity.clear();
+      mMediaProgressListener.clear();
+      onConnectChangeListener.clear();
   }
 }

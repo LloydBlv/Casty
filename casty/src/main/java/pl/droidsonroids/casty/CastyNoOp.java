@@ -1,12 +1,13 @@
 package pl.droidsonroids.casty;
 
+import android.view.Menu;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.mediarouter.app.MediaRouteButton;
-import android.view.Menu;
 
 class CastyNoOp extends Casty {
-    private CastyPlayer castyPlayer;
+    private final CastyPlayer castyPlayer;
 
     CastyNoOp() {
         castyPlayer = new CastyPlayerNoOp();
@@ -39,11 +40,6 @@ class CastyNoOp extends Casty {
 
     @Override
     public void addMiniController() {
-        //no-op
-    }
-
-    @Override
-    public void setOnConnectChangeListener(@Nullable OnConnectChangeListener onConnectChangeListener) {
         //no-op
     }
 
